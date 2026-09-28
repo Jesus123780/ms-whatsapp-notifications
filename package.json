@@ -1,0 +1,62 @@
+{
+  "name": "il-salone-whatsapp-sender",
+  "version": "1.0.0",
+  "description": "WhatsApp Local Sender for Il Salone Barbershop - Controlled message sending via WhatsApp Web",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node -r dotenv/config src/presentation/cli/commands/start.ts",
+    "build": "tsc",
+    "start": "node dist/presentation/cli/commands/start.js",
+    "lint": "eslint src/ tests/ --ext .ts",
+    "lint:fix": "eslint src/ tests/ --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "whatsapp:login": "ts-node -r dotenv/config src/presentation/cli/commands/start.ts",
+    "send:test": "ts-node -r dotenv/config src/presentation/cli/commands/test.ts",
+    "send:test:text": "ts-node -r dotenv/config src/presentation/cli/commands/test-text.ts",
+    "send:test:media": "ts-node -r dotenv/config src/presentation/cli/commands/test-media.ts",
+    "send:test:raw": "ts-node -r dotenv/config src/presentation/cli/commands/test-raw.ts",
+    "send:bulk": "ts-node -r dotenv/config src/presentation/cli/commands/send.ts",
+    "start:server": "ts-node -r dotenv/config src/presentation/cli/commands/server.ts"
+  },
+  "keywords": [
+    "whatsapp",
+    "whatsapp-web",
+    "bulk-sender",
+    "typescript"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.7",
+    "express": "^5.2.1",
+    "multer": "^2.2.0",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.34.7",
+    "ws": "^8.21.3",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^22.10.0",
+    "@types/qrcode-terminal": "^0.12.2",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.4.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
