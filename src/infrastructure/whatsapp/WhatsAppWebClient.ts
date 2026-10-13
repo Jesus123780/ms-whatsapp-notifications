@@ -1,9 +1,13 @@
-import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js';
+import { Client, LocalAuth, Message, MessageMedia } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 import fs from 'fs';
 import path from 'path';
 import { WhatsAppClientPort, WhatsAppContact } from '../../domain/ports/WhatsAppClientPort';
-import { QrObserverPort, WhatsAppClientStatus } from '../../domain/ports/QrObserverPort';
+import {
+  QrObserverPort,
+  WhatsAppClientStatus,
+  WhatsAppMessageDirection,
+} from '../../domain/ports/QrObserverPort';
 import { WhatsAppError } from '../../shared/errors';
 import { Logger } from '../logger/Logger';
 
@@ -87,6 +91,19 @@ export class WhatsAppWebClient implements WhatsAppClientPort {
         this.notifyStatus('disconnected');
       });
 
+      // Mensajes entrantes (recibidos de otros contactos).
+      this.client.on('message', (message: Message) => {
+        if (message.fromMe) return;
+        this.notifyMessageActivity('incoming');
+      });
+
+      // Mensajes salientes (incluye los enviados desde el teléfono vinculado
+      // y los enviados por la API vía sendText/sendMedia).
+      this.client.on('message_create', (message: Message) => {
+        if (!message.fromMe) return;
+        this.notifyMessageActivity('outgoing');
+      });
+
       void this.client.initialize().catch((err: Error) => {
         clearTimeout(timeout);
         reject(new WhatsAppError(`Error inicializando WhatsApp: ${err.message}`));
@@ -144,13 +161,7 @@ export class WhatsAppWebClient implements WhatsAppClientPort {
       throw new WhatsAppError('WhatsApp client no está listo');
     }
 
-    const result = await this.client.sendMessage(chatId, message, {
-      waitUntilMsgSent: true,
-    });
-
-    if (!result) {
-      throw new WhatsAppError('WhatsApp no confirmó el envío del mensaje de texto');
-    }
+    await this.client.sendMessage(chatId, message);
   }
 
   async sendMedia(chatId: string, mediaPath: string, caption?: string): Promise<void> {
@@ -161,7 +172,6 @@ export class WhatsAppWebClient implements WhatsAppClientPort {
     const media = MessageMedia.fromFilePath(mediaPath);
     await this.client.sendMessage(chatId, media, {
       caption: caption ?? '',
-      waitUntilMsgSent: true,
     });
   }
 
@@ -201,6 +211,12 @@ export class WhatsAppWebClient implements WhatsAppClientPort {
   private notifyStatus(status: WhatsAppClientStatus): void {
     for (const observer of this.qrObservers) {
       observer.onStatusChanged(status);
+    }
+  }
+
+  private notifyMessageActivity(direction: WhatsAppMessageDirection): void {
+    for (const observer of this.qrObservers) {
+      observer.onMessageActivity?.(direction);
     }
   }
 }

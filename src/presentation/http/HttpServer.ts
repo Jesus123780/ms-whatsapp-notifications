@@ -16,6 +16,7 @@ import { Logger } from '../../infrastructure/logger/Logger';
 import { sleep, randomDelay } from '../../shared/utils/delay';
 import { ValidationError } from '../../shared/errors';
 import xlsx from 'xlsx';
+import { WhatsAppMessageDirection, WhatsAppMessageStatsService } from '../../application/services/WhatsAppMessageStatsService';
 
 export interface HttpServerOptions {
   port: number;
@@ -42,7 +43,7 @@ export class HttpServer implements QrObserverPort {
   private deps: HttpServerDependencies | null = null;
   private campaignRunning = false;
   private upload: multer.Multer;
-
+  private readonly messageStats = new WhatsAppMessageStatsService();
   constructor(options: HttpServerOptions) {
     this.port = options.port;
     this.options = options;
@@ -58,6 +59,15 @@ export class HttpServer implements QrObserverPort {
 
     this.upload = multer({ dest: uploadDir });
     this.registerRoutes();
+  }
+
+  onMessageActivity(direction: WhatsAppMessageDirection): void {
+    const stats = this.messageStats.record(direction);
+
+    this.broadcast({
+      event: 'messages:stats',
+      stats,
+    });
   }
 
   setDependencies(deps: HttpServerDependencies): void {
@@ -83,7 +93,20 @@ export class HttpServer implements QrObserverPort {
 
       this.wss = new WebSocketServer({ server: this.server });
       this.wss.on('connection', (ws: WebSocket) => {
-        ws.send(JSON.stringify({ event: 'status', status: this.currentStatus, qr: this.currentQr }));
+        ws.send(
+          JSON.stringify({
+            event: 'status',
+            status: this.currentStatus,
+            qr: this.currentQr,
+          }),
+        );
+
+        ws.send(
+          JSON.stringify({
+            event: 'messages:stats',
+            stats: this.messageStats.getSnapshot(),
+          }),
+        );
       });
 
       this.server.listen(this.port, () => {
@@ -154,6 +177,11 @@ export class HttpServer implements QrObserverPort {
     // POST /api/campaign — Upload CSV/Excel and process in batches
     this.app.post('/api/campaign', this.upload.single('file'), (req: Request, res: Response) => {
       void this.handleCampaign(req, res);
+    });
+
+    // GET /api/messages/stats
+    this.app.get('/api/messages/stats', (_req: Request, res: Response) => {
+      res.json(this.messageStats.getSnapshot());
     });
   }
 

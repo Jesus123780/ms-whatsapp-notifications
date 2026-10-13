@@ -217,6 +217,7 @@ export class SendCampaign {
   }
 
   private async sendMessage(chatId: string, message: string): Promise<void> {
+    console.log('Enviado por aca', message)
     if (this.config.sendMode === SendMode.MEDIA_WITH_CAPTION) {
       await this.whatsAppClient.sendMedia(chatId, this.config.campaignImagePath, message);
     } else {

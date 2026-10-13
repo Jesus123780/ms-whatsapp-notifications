@@ -5,7 +5,13 @@ export type WhatsAppClientStatus =
   | 'authenticated'
   | 'ready';
 
+export type WhatsAppMessageDirection = 'incoming' | 'outgoing'
+
 export interface QrObserverPort {
   onQrReceived(qr: string): void;
   onStatusChanged(status: WhatsAppClientStatus): void;
+  onMessageActivity?(
+    direction: WhatsAppMessageDirection,
+  ): void
 }
+
