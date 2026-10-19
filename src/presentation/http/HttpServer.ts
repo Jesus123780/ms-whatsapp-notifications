@@ -49,7 +49,7 @@ export class HttpServer implements QrObserverPort {
     this.options = options;
     this.app = express();
 
-    this.app.use(cors({ origin: options.corsOrigin }));
+    this.app.use(cors({ origin: options.corsOrigin, credentials: true }));
     this.app.use(express.json());
 
     const uploadDir = path.resolve('./data/uploads');
